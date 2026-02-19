@@ -140,7 +140,7 @@ const ComparisonRow = ({ label, current, previous, unit = '', invert = false, is
       <div className="flex flex-col items-end gap-1">
         <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${color}`}>
           {diff >= 0 ? <TrendingUp size={12}/> : <TrendingDown size={12}/>}
-          {displayDiff} {valPrev !== 0 && <span className="ml-1 text-[10px] opacity-70">({Math.abs(perc).toFixed(0)}%)</span>}
+          {displayDiff} {(!isTime && valPrev !== 0) && <span className="ml-1 text-[10px] opacity-70">({Math.abs(perc).toFixed(0)}%)</span>}
         </div>
         <span className="text-[10px] text-slate-400">vs {isTime ? formatTime(valPrev) : formatNumber(valPrev)} prec.</span>
       </div>
@@ -197,6 +197,8 @@ export default function App() {
   const [selectedOperator, setSelectedOperator] = useState('all'); 
   const [uploadModal, setUploadModal] = useState(null);
   const [generatedReport, setGeneratedReport] = useState(null);
+  
+  // FIX: Inserite le variabili mancanti per UI e AI
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -330,11 +332,17 @@ export default function App() {
 
   const handleGenerateReport = () => {
     setIsGenerating(true);
-    setTimeout(() => { setGeneratedReport(generateWeeklyReport(kpi, periods)); setIsGenerating(false); }, 1500); 
+    setTimeout(() => { 
+      setGeneratedReport(generateWeeklyReport(kpi, periods)); 
+      setIsGenerating(false); 
+    }, 1500); 
   };
 
   const copyToClipboard = () => {
-    if (generatedReport) { navigator.clipboard.writeText(generatedReport.text); alert("Testo copiato e pronto per la mail!"); }
+    if (generatedReport) { 
+      navigator.clipboard.writeText(generatedReport.text); 
+      alert("Testo copiato e pronto per la mail!"); 
+    }
   };
 
   const handleFile = async (e, type) => {
@@ -439,7 +447,6 @@ export default function App() {
             
             {view === 'dashboard' && (
               <>
-                {/* LA MATRICE COMPLETA A 8 QUADRANTI */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <ComparisonRow label="Chat Gestite" current={kpi.curr.chat} previous={kpi.prev.chat} />
                   <ComparisonRow label="Tempo Risp. Chat" current={kpi.curr.avg_resp} previous={kpi.prev.avg_resp} isTime={true} invert={true} />
@@ -537,21 +544,16 @@ export default function App() {
               </>
             )}
 
-            {view === 'assistenza' && (
-              <>
-                <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-900">Assistenza</h2>
-                  <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer text-sm font-bold"><Upload size={16} /> Importa Ticket<input type="file" className="hidden" onChange={(e) => handleFile(e, 'assistenza')} /></label>
-                </div>
-                {/* ... existing chart code ... */}
-              </>
-            )}
-
-            {view !== 'dashboard' && view !== 'assistenza' && (
+            {view !== 'dashboard' && (
               <>
                 <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-900 capitalize">Area {view}</h2>
                   <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer text-sm font-bold"><Upload size={16} /> Importa<input type="file" className="hidden" onChange={(e) => handleFile(e, view)} /></label>
                 </div>
-                {/* ... existing upload ui ... */}
+                {view === 'chat' && (
+                  <ChartContainer title="Analisi Chat Operatori" isEmpty={operatorStats.length===0}>
+                    <BarChart data={operatorStats} layout="vertical"><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" hide /><YAxis dataKey="name" type="category" width={100} /><Tooltip/><Bar dataKey="val" fill="#6366f1" radius={[0,4,4,0]} barSize={20}/></BarChart>
+                  </ChartContainer>
+                )}
               </>
             )}
           </div>
