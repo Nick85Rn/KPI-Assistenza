@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
-  AreaChart, Area, Line, ComposedChart 
+  Line, ComposedChart 
 } from 'recharts';
 import { 
   Database, Upload, Users, ClipboardList, AlertCircle, Code, LayoutDashboard, 
-  Calendar, ChevronLeft, ChevronRight, CheckCircle, FileText, TrendingUp, TrendingDown, 
-  Info, Loader2, Bell, Terminal, Activity, User, Mail, Sparkles, Copy, Filter, Bug 
+  ChevronLeft, ChevronRight, TrendingUp, TrendingDown, 
+  Info, Loader2, Terminal, Activity, User, Mail, Sparkles, Copy, Bug 
 } from 'lucide-react';
 import { 
-  format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, 
-  addYears, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
-  startOfYear, endOfYear, isWithinInterval, getISOWeek, eachDayOfInterval, min, max, parseISO, startOfDay, endOfDay 
+  format, subWeeks, startOfWeek, endOfWeek, 
+  isWithinInterval, getISOWeek, eachDayOfInterval, min, max, parseISO, startOfDay, endOfDay 
 } from 'date-fns';
 import { it } from 'date-fns/locale'; 
 import { parseExcel } from './DataParser';
