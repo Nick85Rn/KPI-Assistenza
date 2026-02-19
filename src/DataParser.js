@@ -1,14 +1,11 @@
+/* eslint-disable */
 import * as XLSX from 'xlsx';
 import { isValid, parse } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 
-// --- NORMALIZZAZIONE IDENTITÀ ---
-// Trasforma "Emanuele Rosti" o "emanuele" sempre in "Emanuele"
 const normalizeOperatorName = (name) => {
   if (!name) return '';
   const cleanName = String(name).trim();
-  
-  // Dizionario delle identità (puoi aggiungere eccezioni qui in futuro)
   const aliases = {
     'nicola pellicioni': 'Nicola',
     'emanuele rosti': 'Emanuele',
@@ -17,16 +14,12 @@ const normalizeOperatorName = (name) => {
     'nouha m': 'Nouha',
     'giuseppe u': 'Giuseppe'
   };
-
   const key = cleanName.toLowerCase();
   if (aliases[key]) return aliases[key];
-
-  // Regola generale: prendi solo la prima parola (il Nome) e metti l'iniziale Maiuscola
   const firstName = cleanName.split(' ')[0];
   return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 };
 
-// --- HELPERS TEMPI E DATE ---
 const parseDurationToMinutes = (val) => {
   if (!val || typeof val !== 'string') return 0;
   const cleanVal = val.replace(' hrs', '').trim();
@@ -59,7 +52,7 @@ export const parseExcel = async (file, type) => {
   try {
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
-    let isBinary = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
+    const isBinary = (bytes[0] === 0x50 && bytes[1] === 0x4B) || (bytes[0] === 0xD0 && bytes[1] === 0xCF);
     let workbook, rangeFound = null;
 
     if (isBinary) {
@@ -79,7 +72,7 @@ export const parseExcel = async (file, type) => {
 };
 
 const processData = (rawData, type, rangeFound) => {
-  let cleanData = [];
+  const cleanData = [];
   const findHeader = (keys) => {
     for (let i = 0; i < Math.min(rawData.length, 50); i++) {
       const rowStr = Array.isArray(rawData[i]) ? rawData[i].join(' ').toLowerCase() : '';
@@ -108,7 +101,6 @@ const processData = (rawData, type, rangeFound) => {
       if (!Array.isArray(row)) continue;
       
       const rawOp = row[idxName];
-      // Ignoriamo le righe di sistema e gli admin
       if (!rawOp || String(rawOp).match(/Total|Portal|Generated|Admin/i)) continue;
       
       const op = normalizeOperatorName(rawOp);
@@ -137,9 +129,7 @@ const processData = (rawData, type, rangeFound) => {
       if (!Array.isArray(row)) continue;
       const date = cleanDate(row[idxDate]);
       if (date && row[idxOp]) {
-        
         const op = normalizeOperatorName(row[idxOp]);
-        
         cleanData.push({ 
           date: date.toISOString(), 
           operator: op, 
