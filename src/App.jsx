@@ -9,7 +9,7 @@ import {
   Info, Loader2, Terminal, Activity, User, Mail, Sparkles, Copy, Bug 
 } from 'lucide-react';
 import { 
-  format, subWeeks, startOfWeek, endOfWeek, 
+  format, subWeeks, addWeeks, startOfWeek, endOfWeek, 
   isWithinInterval, getISOWeek, eachDayOfInterval, min, max, parseISO, startOfDay, endOfDay 
 } from 'date-fns';
 import { it } from 'date-fns/locale'; 
@@ -197,8 +197,6 @@ export default function App() {
   const [selectedOperator, setSelectedOperator] = useState('all'); 
   const [uploadModal, setUploadModal] = useState(null);
   const [generatedReport, setGeneratedReport] = useState(null);
-  
-  // FIX: Inserite le variabili mancanti per UI e AI
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [logs, setLogs] = useState([]);
@@ -328,6 +326,11 @@ export default function App() {
       stats[x.operator].form += 1;
     });
     return Object.entries(stats).map(([name, val]) => ({ name, chat: val.chat, form: val.form, score: val.chat + (val.form * 10) })).sort((a,b) => b.score - a.score);
+  }, [data, periods]);
+
+  const astTrend = useMemo(() => {
+    return data.ast.filter(x => safeInRange(x.date, periods.curr.start, periods.curr.end))
+      .map(x => ({ date: format(parseISO(x.date), 'EEE', {locale:it}), new: x.new_tickets, closed: x.closed_tickets, time: x.first_response_time }));
   }, [data, periods]);
 
   const handleGenerateReport = () => {
@@ -544,16 +547,33 @@ export default function App() {
               </>
             )}
 
-            {view !== 'dashboard' && (
+            {view === 'assistenza' && (
+              <>
+                <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-900">Assistenza</h2>
+                  <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer text-sm font-bold"><Upload size={16} /> Importa Ticket<input type="file" className="hidden" onChange={(e) => handleFile(e, 'assistenza')} /></label>
+                </div>
+                <ChartContainer title="Tempo Risposta vs Volumi" isEmpty={astTrend.length === 0}>
+                  <ComposedChart data={astTrend}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" tick={{textTransform: 'capitalize'}} />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" unit="m" />
+                    <Tooltip />
+                    <Bar yAxisId="left" dataKey="closed" fill="#6366f1" radius={[4,4,0,0]} name="Ticket Chiusi" barSize={40}/>
+                    <Line yAxisId="right" type="monotone" dataKey="time" stroke="#f59e0b" strokeWidth={3} name="Tempo Risposta (min)" />
+                  </ComposedChart>
+                </ChartContainer>
+              </>
+            )}
+
+            {view !== 'dashboard' && view !== 'assistenza' && (
               <>
                 <div className="flex justify-between items-center"><h2 className="text-2xl font-bold text-slate-900 capitalize">Area {view}</h2>
                   <label className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer text-sm font-bold"><Upload size={16} /> Importa<input type="file" className="hidden" onChange={(e) => handleFile(e, view)} /></label>
                 </div>
-                {view === 'chat' && (
-                  <ChartContainer title="Analisi Chat Operatori" isEmpty={operatorStats.length===0}>
-                    <BarChart data={operatorStats} layout="vertical"><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" hide /><YAxis dataKey="name" type="category" width={100} /><Tooltip/><Bar dataKey="val" fill="#6366f1" radius={[0,4,4,0]} barSize={20}/></BarChart>
-                  </ChartContainer>
-                )}
+                <ChartContainer title="Analisi" isEmpty={view==='chat' ? operatorStats.length===0 : false}>
+                   {view === 'chat' && <BarChart data={operatorStats} layout="vertical"><CartesianGrid strokeDasharray="3 3" horizontal={false} /><XAxis type="number" hide /><YAxis dataKey="name" type="category" width={100} /><Tooltip/><Bar dataKey="val" fill="#6366f1" radius={[0,4,4,0]} barSize={20}/></BarChart>}
+                </ChartContainer>
               </>
             )}
           </div>
